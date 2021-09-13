@@ -12,11 +12,11 @@ import Error "mo:base/Error";
 /**
 * defabult, installer is owner
 */
-shared(installer) actor class Bucket(installer_ : Principal) = this{
+shared(installer_) actor class Bucket() = this{
 
     private let cycle_limit = 20_000_000_000_000;
     private stable var map = StableMap.defaults<Blob, [Blob]>();
-    private stable let installer = installer_;
+    private stable let installer = installer_.caller;
     private stable var owners = TrieSet.empty<Principal>();
     
     private type BucketIndex = {

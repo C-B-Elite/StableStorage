@@ -1,4 +1,4 @@
-import StableMap "../Type/StableMap";
+import StableMap "../Utils/StableMap";
 import Blob "mo:base/Blob";
 import Option "mo:base/Option";
 import Prim "mo:⛔";
@@ -6,99 +6,90 @@ import Principal "mo:base/Principal";
 import Cycles "mo:base/ExperimentalCycles";
 import Nat "mo:base/Nat";
 import Array "mo:base/Array";
-import BloomFilter "BloomFilter";
+import TrieSet "mo:base/TrieSet";
+import Error "mo:base/Error";
 
-  /// Manages BloomFilters, deploys new BloomFilters, and checks for element membership across filters.
-  /// Args:
-  ///   |capacity|    The maximum number of elements a BlooomFilter may store.
-  ///   |errorRate|   The maximum false positive rate a BloomFilter may maintain.
-  ///   |hashFuncs|   The hash functions used to hash elements into the filter.
-shared(installer) actor class Bucket(capacity : Nat, errorRate: Float, hashFuncs: [(Blob) -> Hash]) = this{
-    
-    private type BloomFilter = BloomFilter.BloomFilter;
+/**
+* defabult, installer is owner
+*/
+shared(installer_) actor class Bucket() = this{
 
-    private stable let numSlices = Float.ceil(Float.log(1.0 / errorRate));
-    private stable let bitsPerSlice = Float.ceil(
-          (Float.fromInt(capacity) * Float.abs(Float.log(errorRate))) /
-          (numSlices * (Float.log(2) ** 2)));
-    private stable let bitMapSize : Nat = Int.abs(Float.toInt(numSlices * bitsPerSlice));
-    
-    private let limit = 20_000_000_000_000;
-
-
+    private let cycle_limit = 20_000_000_000_000;
     private stable var map = StableMap.defaults<Blob, [Blob]>();
-    private stable var filters : [BloomFilter] = [];
-
+    private stable let installer = installer_.caller;
+    private stable var owners = TrieSet.empty<Principal>();
+    
     private type BucketIndex = {
         key : Blob;
         bucket_id : Principal;
     };
 
-    public func wallet_receive() : async Nat {
+    private func isOwner(u : Principal) : Bool{
+        if(TrieSet.mem<Principal>(owners, u, Principal.hash(u), Principal.equal)){ return true };
+        if(Principal.equal(u, installer)){ return true };
+        false
+    };
+
+    public query(msg) func getBalance() : async Nat{
+        if(not isOwner(msg.caller)){ throw Error.reject("you are not the owner of this Bucket") };
+        assert(isOwner(msg.caller));
+        Cycles.balance()
+    };
+
+    public query(msg) func getMemory() : async Nat{
+        if(not isOwner(msg.caller)){ throw Error.reject("you are not the owner of this Bucket") };
+        assert(isOwner(msg.caller));      
+        Prim.rts_memory_size() 
+    };
+
+    public query(msg) func get(key : Blob) : async ?[Blob]{
+        if(not isOwner(msg.caller)){ throw Error.reject("you are not the owner of this Bucket") };
+        assert(isOwner(msg.caller));
+        StableMap.get<Blob, [Blob]>(map, key, Blob.hash, Blob.equal)
+    };
+
+
+    public shared(msg) func wallet_receive() : async Nat {
         let available = Cycles.available();
-        let accepted = Cycles.accept(Nat.min(available, limit));
+        let accepted = Cycles.accept(Nat.min(available, cycle_limit));
         accepted
     };
 
-    public query(msg) func getBalance() : async Nat{ Cycles.balance() };
-
-    public query(msg) func getMemory() : async Nat{
-        Prim.rts_memory_size()
+    public shared(msg) func addOwner(newOwner : Principal) : async Bool{
+        if(not isOwner(msg.caller)){ throw Error.reject("you are not the owner of this Bucket") };
+        owners := TrieSet.put<Principal>(owners, newOwner, Principal.hash(newOwner), Principal.equal);
+        true
     };
-    
+
+    public shared(msg) func delOwner(o : Principal) : async Bool{
+        if(not isOwner(msg.caller)){ throw Error.reject("you are not the owner of this Bucket") };        
+        assert(isOwner(msg.caller));
+        owners := TrieSet.delete<Principal>(owners, o, Principal.hash(o), Principal.equal);
+        true
+    };
+
     public shared(msg) func put(key : Blob, data : [Blob]) : async ?BucketIndex{
+        assert(isOwner(msg.caller));
         map := StableMap.put<Blob, [Blob]>(map, key, data, Blob.hash, Blob.equal);
-        bf_add(key);
         ?{
             key = key;
             bucket_id = Principal.fromActor(this);
         }
     };
 
-    public query(msg) func get(key : Blob) : async ?[Blob]{
-        if(not bf_check(key))){ null };
-        StableMap.get<Blob, [Blob]>(map, key, Blob.hash, Blob.equal)
-    };
-
     public shared(msg) func change(key : Blob, data : [Blob]) : async ?[Blob]{
-        if(not bf_check(key)){ null };
+        if(not isOwner(msg.caller)){ throw Error.reject("you are not the owner of this Bucket") };
+        assert(isOwner(msg.caller));
         map := StableMap.put<Blob, [Blob]>(map, key, data, Blob.hash, Blob.equal);
         StableMap.get<Blob, [Blob]>(map, key, Blob.hash, Blob.equal)
     };
 
     public shared(msg) func delete(key : Blob) : async ?[Blob]{
-        if(not bf_check(key)){ null };
+        if(not isOwner(msg.caller)){ throw Error.reject("you are not the owner of this Bucket") };
+        assert(isOwner(msg.caller));
         map := StableMap.delete<Blob, [Blob]>(map, key, Blob.hash, Blob.equal);
         StableMap.get<Blob, [Blob]>(map, key, Blob.hash, Blob.equal)
     };
-
-    /// Adds an element to the BloomFilter's bitmap and deploys new BloomFilter if previous is at capacity.
-    /// Args:
-    ///   |item|   The item to be added.
-    private func bf_add(item: Blob) {
-        var filter = BloomFilter(bitMapSize, hashFuncs);
-        if (filters.size() > 0) {
-            let last_filter = filters[filters.size() - 1];
-            if (last_filter.getNumItems() < capacity) {
-                filter := last_filter;
-            };
-        };
-        filter.add(item);
-        filters := Array.append<BloomFilter>(filters, [filter]);
-    };
-
-    /// Checks if an item is contained in any BloomFilters
-    /// Args:
-    ///   |item|   The item to be searched for.
-    /// Returns:
-    ///   A boolean indicating set membership.
-    private func bf_check(item: Blob) : Bool {
-        for (filter in Iter.fromArray(filters)) {
-            if (filter.check(item)) { return true; };
-        };
-        false
-    };
-
 
 
 
