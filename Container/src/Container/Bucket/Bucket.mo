@@ -15,6 +15,7 @@ import Error "mo:base/Error";
 shared(installer_) actor class Bucket() = this{
 
     private let cycle_limit = 20_000_000_000_000;
+    private let threshold = 2147483648; //  ~2GB    
     private stable var map = StableMap.defaults<Blob, [Blob]>();
     private stable let installer = installer_.caller;
     private stable var owners = TrieSet.empty<Principal>();
@@ -40,6 +41,12 @@ shared(installer_) actor class Bucket() = this{
         if(not isOwner(msg.caller)){ throw Error.reject("you are not the owner of this Bucket") };
         assert(isOwner(msg.caller));      
         Prim.rts_memory_size() 
+    };
+
+    public query(msg) func getAvalMemory() : async Nat{
+        if(not isOwner(msg.caller)){ throw Error.reject("you are not the owner of this Bucket") };
+        assert(isOwner(msg.caller));      
+        (threshold - Prim.rts_memory_size())
     };
 
     public query(msg) func get(key : Blob) : async ?[Blob]{
@@ -70,6 +77,14 @@ shared(installer_) actor class Bucket() = this{
 
     public shared(msg) func put(key : Blob, data : [Blob]) : async ?BucketIndex{
         assert(isOwner(msg.caller));
+        let avalMemory = threshold - Prim.rts_memory_size();
+        var needSize = key.size();
+        for(chunk in data.vals()){
+            needSize += chunk.size();
+        };
+        if(avalMemory < needSize){
+            throw Error.reject("this bucket don't have enough memory for storaging this file, please create a new bucket")
+        };
         map := StableMap.put<Blob, [Blob]>(map, key, data, Blob.hash, Blob.equal);
         ?{
             key = key;
