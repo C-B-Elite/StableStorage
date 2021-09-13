@@ -4,11 +4,13 @@ export const idlFactory = ({ IDL }) => {
     'bucket_id' : IDL.Principal,
   });
   const Bucket = IDL.Service({
+    'addOwner' : IDL.Func([IDL.Principal], [IDL.Bool], []),
     'change' : IDL.Func(
         [IDL.Vec(IDL.Nat8), IDL.Vec(IDL.Vec(IDL.Nat8))],
         [IDL.Opt(IDL.Vec(IDL.Vec(IDL.Nat8)))],
         [],
       ),
+    'delOwner' : IDL.Func([IDL.Principal], [IDL.Bool], []),
     'delete' : IDL.Func(
         [IDL.Vec(IDL.Nat8)],
         [IDL.Opt(IDL.Vec(IDL.Vec(IDL.Nat8)))],
@@ -30,4 +32,4 @@ export const idlFactory = ({ IDL }) => {
   });
   return Bucket;
 };
-export const init = ({ IDL }) => { return []; };
+export const init = ({ IDL }) => { return [IDL.Principal]; };

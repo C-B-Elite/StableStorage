@@ -1,10 +1,13 @@
 ## Bucket
+存储Canister单体
 
 ### Bucket说明
 Bucket 当前的存储使用的是Stable HashMap， 未来要支持更多Map
 
 ### 修改GC算法
+若想要从Coping GC修改为Compacting GC, 参考:
 修改dfx.json中的build为:
+
 ```
 "build": {
     "args": "--compacting-gc",

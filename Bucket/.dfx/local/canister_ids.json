@@ -1,8 +1,8 @@
 {
-  "container": {
-    "local": "rrkah-fqaaa-aaaaa-aaaaq-cai"
-  },
-  "tc": {
+  "__Candid_UI": {
     "local": "ryjl3-tyaaa-aaaaa-aaaba-cai"
+  },
+  "bucket": {
+    "local": "rrkah-fqaaa-aaaaa-aaaaq-cai"
   }
 }

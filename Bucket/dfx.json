@@ -7,7 +7,7 @@
   },
   "defaults": {
     "build": {
-      "args": "",
+      "args": "--compacting-gc",
       "packtool": "vessel sources"
     }
   },

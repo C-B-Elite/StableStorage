@@ -1,8 +1,10 @@
 import type { Principal } from '@dfinity/principal';
 export interface Bucket {
+  'addOwner' : (arg_0: Principal) => Promise<boolean>,
   'change' : (arg_0: Array<number>, arg_1: Array<Array<number>>) => Promise<
       [] | [Array<Array<number>>]
     >,
+  'delOwner' : (arg_0: Principal) => Promise<boolean>,
   'delete' : (arg_0: Array<number>) => Promise<[] | [Array<Array<number>>]>,
   'get' : (arg_0: Array<number>) => Promise<[] | [Array<Array<number>>]>,
   'getBalance' : () => Promise<bigint>,

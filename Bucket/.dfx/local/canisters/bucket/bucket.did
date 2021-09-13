@@ -5,7 +5,9 @@ type BucketIndex =
  };
 type Bucket = 
  service {
+   addOwner: (principal) -> (bool);
    change: (blob, vec blob) -> (opt vec blob);
+   delOwner: (principal) -> (bool);
    delete: (blob) -> (opt vec blob);
    get: (blob) -> (opt vec blob) query;
    getBalance: () -> (nat) query;
@@ -13,4 +15,4 @@ type Bucket =
    put: (blob, vec blob) -> (opt BucketIndex);
    wallet_receive: () -> (nat);
  };
-service : () -> Bucket
+service : (principal) -> Bucket

@@ -2,10 +2,6 @@ import Text "mo:base/Text";
 
 module {
 
-    
-
-
-
     public type canister_id = Principal;
     public type canister_settings = {
         freezing_threshold : ?Nat;

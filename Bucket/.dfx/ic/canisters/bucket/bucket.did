@@ -1,0 +1,17 @@
+type BucketIndex = 
+ record {
+   bucket_id: principal;
+   key: blob;
+ };
+type Bucket = 
+ service {
+   change: (blob, vec blob) -> (opt vec blob);
+   delete: (blob) -> (opt vec blob);
+   get: (blob) -> (opt vec blob) query;
+   getBalance: () -> (nat) query;
+   getMemory: () -> (nat) query;
+   put: (blob, vec blob) -> (opt BucketIndex);
+   test: () -> (text) query;
+   wallet_receive: () -> (nat);
+ };
+service : () -> Bucket
