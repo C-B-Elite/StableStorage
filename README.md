@@ -1,31 +1,27 @@
 ### Stable Storage
-backend source code : src/exp/
-## Container
-backend source code : src/exp/Container.mo
-Container是控制Bucket，进行自动生成新的Bucket， 充值Cycle等， 相当于Bucket的管家， 接下来Container应该做的是一个query的中转， 而不是上传数据等（TODO）
-目前Container为了测试方便 参数是Text， 可以改成Blob， 然后使用dfx canister call cansiter_id function_name '(Blob "data")'
+* Container
+* Bucket
 
+## Container
+Container:  Container - Bucket 两层结构， Container作为Bucket的管理层与第一次query（查询key在哪个Bucket）的处理层
+* 负责：
+* 生成新的Container Canister
+* 生成新的Bucket Canister
+* 对Bucket充值Cycle
+* 处理询问： 数据是否存在于本Container-Bucket组， 不存在则返回false/null， 存在则返回{Bucket_Canister_id : Principal, key : Blob}
+
+### TODO
+* 集成Bucket布隆过滤器及其对应措施
+* Container自管理（自动扩容，Cycle等）
 
 
 ## Bucket
+Bucket主要作为一个存储Canister的模板， 提供基础的增删改查
+* 负责：
+* 对数据的增删改查
 
-backend suorce code : src/exp/Bucket.mo
-Bucket只负责存数据，增删改查，不负责其他的
-TODO 1 : 下一步是考虑数组存和stable树存，这两个哪一个更好
-TODO 2 : 测试Stable Map的stable特性
-TODO 3 : 支持多种索引树
--
-
-
-
-## BloomFilter Error Rate
-
-number of hash function : k
-
-size of bit array : m
-
-elment number of bit array : n
-
-*  best k = (m/n)*ln2 -> 0.7 * (m/n)
-
-* ![Error Rate](images/ErrorRate.png)
+### TODO
+* 完善存储树， 现在为Hashmap， 带补充TrieMap， RBTree-Map， BinarySearchTree ···
+* 集成布隆过滤器
+* Compacting GC 版 和 Coping GC 版
+ 
