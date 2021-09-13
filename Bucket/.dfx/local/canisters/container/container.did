@@ -1,0 +1,20 @@
+type testData = 
+ record {
+   "blob": vec blob;
+   "text": text;
+ };
+type Container = 
+ service {
+   getBalance: () -> (nat) query;
+   getBucket: (text) -> (opt principal) query;
+   getData: (text) -> (testData);
+   getMemory: () -> (nat) query;
+   putData: (text, text) -> (opt BucketIndex);
+   wallet_receive: () -> (nat);
+ };
+type BucketIndex = 
+ record {
+   bucket_id: principal;
+   key: text;
+ };
+service : () -> Container
