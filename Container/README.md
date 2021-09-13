@@ -9,12 +9,12 @@ Container是控制Bucket，进行自动生成新的Bucket， 充值Cycle等， �
 
 ## Bucket
 
-backend suorce code : src/exp/Bucket.mo
-Bucket只负责存数据，增删改查，不负责其他的
-TODO 1 : 下一步是考虑数组存和stable树存，这两个哪一个更好
-TODO 2 : 测试Stable Map的stable特性
-TODO 3 : 支持多种索引树
--
+* backend suorce code : src/exp/Bucket.mo
+* Bucket只负责存数据，增删改查，不负责其他的
+* TODO 1 : 下一步是考虑数组存和stable树存，这两个哪一个更好
+* TODO 2 : 测试Stable Map的stable特性
+* TODO 3 : 支持多种索引树
+* -
 
 
 
