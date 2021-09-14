@@ -10,15 +10,23 @@ import TrieSet "mo:base/TrieSet";
 import Error "mo:base/Error";
 
 /**
-* defabult, installer is owner
+* defabult, init_owner is owner
 */
-shared(installer_) actor class Bucket() = this{
+shared(installer) actor class Bucket(init_owner_ : Principal, gc : Text) = this{
 
     private let cycle_limit = 20_000_000_000_000;
     private stable var map = StableMap.defaults<Blob, [Blob]>();
-    private stable let installer = installer_.caller;
+    private stable let init_owner = init_owner_;
     private stable var owners = TrieSet.empty<Principal>();
-    
+    //2G or 4G - 196108 byte
+    private stable let threshold = if(gc == "coping"){
+            2147287040
+        }else if(gc == "compacting"){
+            4294770688
+        }else{
+            2147287040
+        };
+
     private type BucketIndex = {
         key : Blob;
         bucket_id : Principal;
@@ -26,7 +34,7 @@ shared(installer_) actor class Bucket() = this{
 
     private func isOwner(u : Principal) : Bool{
         if(TrieSet.mem<Principal>(owners, u, Principal.hash(u), Principal.equal)){ return true };
-        if(Principal.equal(u, installer)){ return true };
+        if(Principal.equal(u, init_owner)){ return true };
         false
     };
 
@@ -40,6 +48,12 @@ shared(installer_) actor class Bucket() = this{
         if(not isOwner(msg.caller)){ throw Error.reject("you are not the owner of this Bucket") };
         assert(isOwner(msg.caller));      
         Prim.rts_memory_size() 
+    };
+
+    public query(msg) func getAvalMemory() : async Nat{
+        if(not isOwner(msg.caller)){ throw Error.reject("you are not the owner of this Bucket") };
+        assert(isOwner(msg.caller));      
+        (threshold - Prim.rts_memory_size())
     };
 
     public query(msg) func get(key : Blob) : async ?[Blob]{
