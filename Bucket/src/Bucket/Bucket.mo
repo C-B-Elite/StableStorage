@@ -1,11 +1,9 @@
 import StableMap "../Utils/StableMap";
 import Blob "mo:base/Blob";
-import Option "mo:base/Option";
 import Prim "mo:⛔";
 import Principal "mo:base/Principal";
 import Cycles "mo:base/ExperimentalCycles";
 import Nat "mo:base/Nat";
-import Array "mo:base/Array";
 import TrieSet "mo:base/TrieSet";
 import Error "mo:base/Error";
 
