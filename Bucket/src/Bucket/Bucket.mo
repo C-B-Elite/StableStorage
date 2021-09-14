@@ -1,13 +1,12 @@
 import StableMap "../Utils/StableMap";
 import Blob "mo:base/Blob";
-import Option "mo:base/Option";
 import Prim "mo:⛔";
 import Principal "mo:base/Principal";
 import Cycles "mo:base/ExperimentalCycles";
 import Nat "mo:base/Nat";
-import Array "mo:base/Array";
 import TrieSet "mo:base/TrieSet";
 import Error "mo:base/Error";
+import Array "mo:base/Array";
 
 /**
 * defabult, init_owner is owner
@@ -36,6 +35,16 @@ shared(installer) actor class Bucket(init_owner_ : Principal, gc : Text) = this{
         if(TrieSet.mem<Principal>(owners, u, Principal.hash(u), Principal.equal)){ return true };
         if(Principal.equal(u, init_owner)){ return true };
         false
+    };
+
+    public query(msg) func getGcType() : async Text{
+        if(not isOwner(msg.caller)){ throw Error.reject("you are not the owner of this Bucket") };
+        assert(isOwner(msg.caller));
+        if(threshold == 2147287040){
+            "coping"
+        }else{
+            "compacting"
+        }
     };
 
     public query(msg) func getBalance() : async Nat{
@@ -82,9 +91,24 @@ shared(installer) actor class Bucket(init_owner_ : Principal, gc : Text) = this{
         true
     };
 
-    public shared(msg) func put(key : Blob, data : [Blob]) : async ?BucketIndex{
+    /**
+    *   append : append more [blob] to the same file
+    *       true : append chunk ; false : new data chunk
+    */
+    public shared(msg) func put(key : Blob, data : [Blob], append : Bool) : async ?BucketIndex{
+        if(not isOwner(msg.caller)){ throw Error.reject("you are not the owner of this Bucket") };        
         assert(isOwner(msg.caller));
-        map := StableMap.put<Blob, [Blob]>(map, key, data, Blob.hash, Blob.equal);
+        if(append){
+            let pre = switch(StableMap.get<Blob, [Blob]>(map, key, Blob.hash, Blob.equal)){
+                case null { [] };
+                case (?data){ data };
+            };
+            //need improve
+            let new = Array.append<Blob>(pre, data);
+            map := StableMap.put<Blob, [Blob]>(map, key, new, Blob.hash, Blob.equal);
+        }else{
+            map := StableMap.put<Blob, [Blob]>(map, key, data, Blob.hash, Blob.equal);
+        };
         ?{
             key = key;
             bucket_id = Principal.fromActor(this);
