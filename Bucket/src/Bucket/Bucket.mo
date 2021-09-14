@@ -18,7 +18,7 @@ shared(installer) actor class Bucket(init_owner_ : Principal, gc : Text) = this{
     private stable var map = StableMap.defaults<Blob, [Blob]>();
     private stable let init_owner = init_owner_;
     private stable var owners = TrieSet.empty<Principal>();
-    //2G or 4G - 196108 byte
+    //2G or 4G - 196608 byte
     private stable let threshold = if(gc == "coping"){
             2147287040
         }else if(gc == "compacting"){
