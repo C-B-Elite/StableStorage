@@ -62,7 +62,7 @@ shared(installer) actor class Bucket(init_owner_ : Principal, gc : Text) = this{
     public query(msg) func getAvalMemory() : async Nat{
         if(not isOwner(msg.caller)){ throw Error.reject("you are not the owner of this Bucket") };
         assert(isOwner(msg.caller));      
-        (threshold - Prim.rts_memory_size())
+        (threshold - Prim.rts_heap_size())
     };
 
     public query(msg) func get(key : Blob) : async ?[Blob]{
