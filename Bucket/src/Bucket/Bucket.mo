@@ -53,16 +53,12 @@ shared(installer) actor class Bucket(init_owner_ : Principal, gc : Text) = this{
         Cycles.balance()
     };
 
-    public query(msg) func getMemory() : async Nat{
+    public query(msg) func getMemory() : async Text{
         if(not isOwner(msg.caller)){ throw Error.reject("you are not the owner of this Bucket") };
         assert(isOwner(msg.caller));      
-        Prim.rts_memory_size() 
-    };
-
-    public query(msg) func getAvalMemory() : async Nat{
-        if(not isOwner(msg.caller)){ throw Error.reject("you are not the owner of this Bucket") };
-        assert(isOwner(msg.caller));      
-        (threshold - Prim.rts_heap_size())
+        "RTS_Memory : " # Nat.toText(Prim.rts_memory_size()) # "\n"
+        # "RTS Heap Memory : " # Nat.toText(Prim.rts_heap_size()) # "\n"
+        # "RTS Total Alive Size : " # Nat.toText(Prim.rts_max_live_size())
     };
 
     public query(msg) func get(key : Blob) : async ?[Blob]{
