@@ -7,6 +7,8 @@ import Nat "mo:base/Nat";
 import TrieSet "mo:base/TrieSet";
 import Error "mo:base/Error";
 import Array "mo:base/Array";
+import Int "mo:base/Int";
+import Time "mo:base/Time";
 
 /**
 * defabult, init_owner is owner
@@ -37,6 +39,10 @@ shared(installer) actor class Bucket(init_owner_ : Principal, gc : Text) = this{
         false
     };
 
+    public query(msg) func getTime() : async Nat{
+        Int.abs(Time.now())
+    };
+
     public query(msg) func getGcType() : async Text{
         if(not isOwner(msg.caller)){ throw Error.reject("you are not the owner of this Bucket") };
         assert(isOwner(msg.caller));
@@ -58,7 +64,8 @@ shared(installer) actor class Bucket(init_owner_ : Principal, gc : Text) = this{
         assert(isOwner(msg.caller));      
         "RTS_Memory : " # Nat.toText(Prim.rts_memory_size()) # "\n"
         # "RTS Heap Memory : " # Nat.toText(Prim.rts_heap_size()) # "\n"
-        # "RTS Total Alive Size : " # Nat.toText(Prim.rts_max_live_size())
+        # "RTS Total Alive Size : " # Nat.toText(Prim.rts_max_live_size()) # "\n"
+        # "RTS Available Memory Size : " # Nat.toText(threshold - Prim.rts_heap_size())
     };
 
     public query(msg) func get(key : Blob) : async ?[Blob]{

@@ -3,6 +3,10 @@
     "bucket": {
       "main": "src/Bucket/Bucket.mo",
       "type": "motoko"
+    },
+    "test": {
+      "main": "src/Test/bucket_test.mo",
+      "type": "motoko"
     }
   },
   "defaults": {

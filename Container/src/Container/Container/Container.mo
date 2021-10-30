@@ -24,7 +24,6 @@ shared(installer) actor class Container() = this{
 
     private type BucketInfo = {
         bucket : Bucket.Bucket;
-        //threshold - rts_memory_size
         avalMemory : Nat;
     };
 
